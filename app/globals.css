@@ -1,14 +1,14 @@
 :root {
   --background: #f8f4ec;
-  --foreground: #1e2723;
-  --muted: #66736d;
-  --card: rgba(255, 255, 255, 0.56);
-  --card-strong: rgba(255, 255, 255, 0.82);
-  --border: rgba(104, 126, 113, 0.2);
+  --foreground: #1b2521;
+  --muted: #687770;
+  --card: rgba(255, 255, 255, 0.5);
+  --card-strong: rgba(255, 255, 255, 0.76);
+  --border: rgba(103, 124, 113, 0.18);
   --accent: #4f8f79;
   --accent-dark: #245b4b;
   --danger: #b34747;
-  --shadow: 0 28px 80px rgba(88, 103, 96, 0.18);
+  --shadow: 0 24px 70px rgba(88, 103, 96, 0.15);
 }
 
 * {
@@ -25,9 +25,10 @@ body {
   margin: 0;
   color: var(--foreground);
   background:
-    radial-gradient(circle at 18% 12%, rgba(170, 220, 205, 0.55), transparent 26rem),
-    radial-gradient(circle at 82% 18%, rgba(255, 231, 185, 0.78), transparent 28rem),
-    linear-gradient(135deg, #fbf7ef 0%, #edf7f2 48%, #f8faf7 100%);
+    radial-gradient(circle at 18% 10%, rgba(169, 220, 204, 0.62), transparent 25rem),
+    radial-gradient(circle at 82% 12%, rgba(255, 231, 185, 0.82), transparent 27rem),
+    radial-gradient(circle at 52% 88%, rgba(213, 238, 229, 0.48), transparent 30rem),
+    linear-gradient(135deg, #fbf7ee 0%, #edf7f2 48%, #f9faf6 100%);
   font-family:
     "Noto Sans SC",
     "Microsoft YaHei",
@@ -49,7 +50,7 @@ textarea {
 
 .page-shell {
   position: relative;
-  width: min(1180px, calc(100% - 32px));
+  width: min(1200px, calc(100% - 48px));
   margin: 0 auto;
   padding: 36px 0 64px;
 }
@@ -58,8 +59,8 @@ textarea {
   border: 1px solid var(--border);
   background: var(--card);
   box-shadow: var(--shadow);
-  backdrop-filter: blur(24px) saturate(145%);
-  -webkit-backdrop-filter: blur(24px) saturate(145%);
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
 }
 
 .pill {
@@ -67,13 +68,16 @@ textarea {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 42px;
+  min-height: 40px;
   border: 1px solid var(--border);
   border-radius: 999px;
-  padding: 0 18px;
-  background: rgba(255, 255, 255, 0.56);
+  padding: 0 17px;
+  background: rgba(255, 255, 255, 0.54);
   color: var(--foreground);
   cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 10px 24px rgba(88, 103, 96, 0.08);
   transition:
     transform 180ms ease,
     background 180ms ease,
