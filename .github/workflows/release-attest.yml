@@ -1,0 +1,168 @@
+name: Release Attestation
+
+# Produces build provenance for every published GitHub Release and keeps
+# the signed artefacts discoverable from the workflow run page.
+#
+# Why a separate workflow, not release-please.yml:
+# - release-please.yml creates the GitHub Release, at which point the
+#   release is finalised and immutable on this repository. Attesting has
+#   to live outside that workflow so that we never need to modify an
+#   already-published release.
+# - The attestation itself is stored forever in GitHub's attestation API
+#   (reachable via `gh attestation verify`), so the workflow run that
+#   produced it can be ephemeral. Workflow artefacts only need to live
+#   long enough for a reviewer to cross-check the digest.
+#
+# What downstream consumers get:
+#   - A sigstore-signed provenance attestation over the source tarball
+#     and an SPDX 2.3 SBOM, queryable via `gh attestation verify`.
+#   - Both files are available as workflow artefacts (90-day retention)
+#     for human audit.
+#
+# Verify a release:
+#   curl -LO "https://github.com/2029193370/ci-templates/archive/refs/tags/v2.2.0.tar.gz"
+#   mv v2.2.0.tar.gz ci-templates-v2.2.0.tar.gz
+#   gh attestation verify --repo 2029193370/ci-templates ci-templates-v2.2.0.tar.gz
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Git tag to attest (e.g. v2.1.0). Ignored when triggered by a release event.'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-attest-${{ github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  attest:
+    name: Sign release artefacts with sigstore
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      # Required so actions/attest-build-provenance can mint an OIDC
+      # token and bind the signature to this workflow run.
+      id-token: write
+      # Required so the attestation can be published to GitHub's
+      # attestation store under this repository.
+      attestations: write
+      # Read-only against the repo contents; we deliberately do NOT
+      # upload to the release (release-published state is immutable here).
+      contents: read
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        with:
+          egress-policy: audit
+
+      - name: Resolve target tag
+        id: target
+        env:
+          EVENT_TAG: ${{ github.event.release.tag_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          tag="${EVENT_TAG:-${INPUT_TAG:-}}"
+          if [ -z "$tag" ]; then
+            echo "::error::No tag determined from release event or workflow_dispatch input"
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "Target tag: $tag"
+
+      - name: Checkout at tag (for SBOM scan)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ steps.target.outputs.tag }}
+          persist-credentials: false
+
+      - name: Download GitHub-generated source tarball
+        id: tarball
+        env:
+          TAG: ${{ steps.target.outputs.tag }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          repo_short="${REPO##*/}"
+          archive="${repo_short}-${TAG}.tar.gz"
+
+          # We download the exact same tarball any third party can fetch
+          # from github.com. Those bytes are deterministic at GitHub's end
+          # for a given tag, so attesting them lets downstream verifiers
+          # redownload from GitHub and run `gh attestation verify` against
+          # bits they did not have to trust us to distribute.
+          curl --fail --silent --show-error --location \
+            --retry 3 --retry-delay 5 \
+            -o "$archive" \
+            "https://github.com/${REPO}/archive/refs/tags/${TAG}.tar.gz"
+
+          sha256sum "$archive" > "${archive}.sha256"
+          echo "archive=$archive" >> "$GITHUB_OUTPUT"
+          echo "sha256_file=${archive}.sha256" >> "$GITHUB_OUTPUT"
+          echo ""
+          echo "Downloaded tarball:"
+          ls -l "$archive" "${archive}.sha256"
+          echo ""
+          echo "sha256:"
+          cat "${archive}.sha256"
+
+      - name: Generate SBOM (SPDX 2.3)
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          path: .
+          format: spdx-json
+          output-file: sbom.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+
+      - name: Attest provenance of source tarball and SBOM
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        with:
+          subject-path: |
+            ${{ steps.tarball.outputs.archive }}
+            sbom.spdx.json
+
+      - name: Upload signed artefacts as workflow artefacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-${{ steps.target.outputs.tag }}-attestation-bundle
+          path: |
+            ${{ steps.tarball.outputs.archive }}
+            ${{ steps.tarball.outputs.sha256_file }}
+            sbom.spdx.json
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Summarise verification command
+        env:
+          TAG: ${{ steps.target.outputs.tag }}
+          REPO: ${{ github.repository }}
+          ARCHIVE: ${{ steps.tarball.outputs.archive }}
+          SHA_FILE: ${{ steps.tarball.outputs.sha256_file }}
+        run: |
+          {
+            echo "## Release attestation for $TAG"
+            echo ""
+            echo "Signed the following artefacts via sigstore (Fulcio + Rekor) using the"
+            echo "workflow run's short-lived OIDC identity:"
+            echo ""
+            echo "| Artefact | sha256 |"
+            echo "|----------|--------|"
+            printf '| `%s` | `%s` |\n' "$ARCHIVE" "$(awk '{print $1}' "$SHA_FILE")"
+            printf '| `%s` | `%s` |\n' 'sbom.spdx.json' "$(sha256sum sbom.spdx.json | awk '{print $1}')"
+            echo ""
+            echo "### Verify locally"
+            echo ""
+            echo '```bash'
+            echo "curl -L -o $ARCHIVE \\"
+            echo "  \"https://github.com/$REPO/archive/refs/tags/$TAG.tar.gz\""
+            echo "gh attestation verify --repo $REPO $ARCHIVE"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

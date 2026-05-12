@@ -1,0 +1,82 @@
+name: Release Please
+
+on:
+  push:
+    branches: ['main']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release-please:
+    name: release-please
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      # Required so we can `gh workflow run release-attest.yml` at the
+      # end: the default GITHUB_TOKEN cannot trigger other workflows
+      # from a release event, so we dispatch the attestation run
+      # ourselves once a version has actually shipped.
+      actions: write
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        with:
+          egress-policy: audit
+
+      - name: Run release-please
+        id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          release-type: simple
+          config-file: .release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      - name: Checkout on release
+        if: ${{ steps.release.outputs.release_created }}
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          # Token persistence is required here to push the sliding major tag.
+          persist-credentials: true
+
+      - name: Move sliding major tag (vN)
+        if: ${{ steps.release.outputs.release_created }}
+        env:
+          MAJOR: ${{ steps.release.outputs.major }}
+          TAG: ${{ steps.release.outputs.tag_name }}
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # release-please creates the version tag on GitHub via the API, so the
+          # local clone produced by actions/checkout does not know about it yet.
+          # Fetch tags explicitly to avoid "Failed to resolve 'vX.Y.Z' as a valid
+          # ref" when we try to repoint the sliding major tag.
+          git fetch --tags --force origin
+          echo "Moving sliding tag v${MAJOR} -> ${TAG}"
+          git tag -f "v${MAJOR}" "${TAG}"
+          git push -f origin "v${MAJOR}"
+
+      - name: Dispatch release attestation
+        if: ${{ steps.release.outputs.release_created }}
+        env:
+          # The attestation workflow needs id-token:write, so it cannot
+          # simply chain off the `release: published` event: GitHub's
+          # default anti-loop policy suppresses workflow triggers caused
+          # by another workflow's GITHUB_TOKEN. A manual dispatch via
+          # `gh workflow run` does fire, provided the caller has
+          # `actions: write` on the repo.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ steps.release.outputs.tag_name }}
+        run: |
+          set -euo pipefail
+          echo "Dispatching release-attest.yml for tag $TAG"
+          gh workflow run release-attest.yml \
+            --repo "$REPO" \
+            --ref main \
+            -f "tag=$TAG"

@@ -1,0 +1,53 @@
+name: CI & Security Scan
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    # -----------------------------------------------------------------
+    # Version pinning — pick the row that matches your risk profile:
+    #
+    #   @v2          sliding major tag    auto-picks up every v2.x.y
+    #                                     on next CI run (recommended)
+    #   @v2.2.1      exact release tag    reproducible; you own the
+    #                                     upgrade cadence (regulated
+    #                                     / audited environments)
+    #   @<40-char sha>  commit SHA        strictest supply-chain
+    #                                     posture; never moves unless
+    #                                     you edit this file
+    #
+    # Default is @v2: you get security fixes and new language support
+    # without opening a single PR. Switch to an exact tag or SHA when
+    # compliance rules ("no silent dependency updates") demand it.
+    # Full trade-off table: https://github.com/2029193370/ci-templates#versioning--upgrade-policy
+    # -----------------------------------------------------------------
+    uses: 2029193370/ci-templates/.github/workflows/reusable-ci.yml@v2
+    # Uncomment what you need. Every input is optional and auto-defaults.
+    # with:
+    #   node-version: '22'
+    #   node-versions: '["20","22"]'   # matrix test (overrides node-version)
+    #   java-version: '21'
+    #   php-version: '8.3'
+    #   python-version: '3.12'
+    #   python-versions: '["3.11","3.12"]'
+    #   go-version: '1.23'
+    #   dotnet-version: '8.0'
+    #   trivy-severity: 'CRITICAL,HIGH'
+    #   trivy-exit-code: '1'
+    #   enable-checkov: true           # IaC scan + policy gate (Terraform/K8s/Dockerfile)
+    #   enable-license-scan: false     # REUSE SPDX compliance scan
+    #   harden-runner-policy: 'audit'  # 'block' for strict egress
+    # secrets:
+    #   CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

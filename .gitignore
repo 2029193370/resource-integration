@@ -1,0 +1,120 @@
+# ===== IDE / Editor =====
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# ===== Operating system =====
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ===== Logs & temp =====
+*.log
+logs/
+*.pid
+*.seed
+*.pid.lock
+tmp/
+temp/
+
+# ===== Secrets (keep .env.example in repo) =====
+.env
+.env.local
+.env.development
+.env.production
+.env.*.local
+!.env.example
+!.env.sample
+*.pem
+*.key
+*.p12
+*.pfx
+
+# ===== Node.js / TypeScript =====
+node_modules/
+dist/
+build/
+.next/
+.nuxt/
+out/
+.cache/
+coverage/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+htmlcov/
+.venv/
+venv/
+env/
+
+# ===== Java =====
+target/
+*.class
+*.jar
+*.war
+*.ear
+.gradle/
+!gradle-wrapper.jar
+hs_err_pid*
+replay_pid*
+
+# ===== PHP =====
+vendor/
+composer.phar
+
+# ===== Go =====
+bin/
+*.exe
+*.test
+*.out
+
+# ===== .NET =====
+obj/
+*.user
+*.suo
+*.userprefs
+.vs/
+
+# ===== Docker =====
+.docker/
+
+# ===== CI artifacts =====
+artifacts/
+reports/
+test-results/
+coverage.xml
+*.lcov
+
+# ===== Generated artifacts (rebuilt in CI) =====
+# Tailwind CSS is compiled by .github/workflows/pages.yml from
+# docs/input.css + docs/tailwind.config.js. Keeping the compiled file
+# out of VCS avoids binary churn in PR diffs.
+docs/assets/tailwind.css
+
+# ===== Temp helper scripts (ignored locally, not for reuse) =====
+# Catch-all for scratch files that start with a single leading underscore
+# (_msg.txt, _pins.json, _normalize.py, _upgrade_pins.ps1, ...). The
+# `_[!_]` guard leaves Python dunder files such as __init__.py alone.
+_[!_]*.py
+_[!_]*.ps1
+_[!_]*.json
+_[!_]*.txt
+_[!_]*.md
