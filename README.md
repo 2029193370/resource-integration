@@ -56,15 +56,23 @@ psql "$DATABASE_URL" -f database/initial-database.sql
 
 ## 部署到 Vercel
 
-首次部署前安装并登录 Vercel CLI：
+首次部署前在 Vercel 控制台配置环境变量，数据库直接使用你现有的 Neon 连接串，不需要脚本额外创建数据库：
+
+```env
+DATABASE_URL="你的 Neon PostgreSQL 连接串"
+SESSION_SECRET="至少 32 位随机字符串"
+NEXT_PUBLIC_APP_NAME="网址收藏导航"
+NEXT_PUBLIC_DEFAULT_LOCALE=zh-CN
+```
+
+首次使用前登录 Vercel CLI：
 
 ```bash
 npm install -g vercel
 vercel login
-vercel link
 ```
 
-配置 Vercel 环境变量后执行：
+连接项目并部署：
 
 ```bash
 ./scripts/deploy-vercel.sh
@@ -75,6 +83,14 @@ Windows PowerShell：
 ```powershell
 .\scripts\deploy-vercel.ps1
 ```
+
+也可以直接执行：
+
+```bash
+npm run deploy:vercel
+```
+
+脚本会在未连接 Vercel 项目时执行 `vercel link`，已连接时直接拉取生产环境变量、运行 lint/test/build，并部署到生产环境。
 
 ## 验证
 

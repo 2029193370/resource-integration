@@ -49,7 +49,6 @@ psql "$DATABASE_URL" -f database/initial-database.sql
 ```bash
 npm install -g vercel
 vercel login
-vercel link
 ```
 
 在 Vercel 项目中配置环境变量：
@@ -58,10 +57,7 @@ vercel link
 NEXT_PUBLIC_APP_NAME="网址收藏导航"
 NEXT_PUBLIC_DEFAULT_LOCALE=zh-CN
 SESSION_SECRET="至少 32 位随机字符串"
-DATABASE_URL="Neon pooled connection string"
-DIRECT_URL="Neon direct connection string"
-ADMIN_USERNAME="admin"
-ADMIN_PASSWORD="强密码，仅首次 seed 使用"
+DATABASE_URL="现有 Neon PostgreSQL 连接串"
 ```
 
 ### 4.2 部署脚本
@@ -78,10 +74,11 @@ ADMIN_PASSWORD="强密码，仅首次 seed 使用"
 
 脚本职责：
 
-- 检查必需环境变量。
+- 未连接 Vercel 项目时执行 `vercel link`。
 - 执行 `npm ci`。
+- 执行 `vercel pull --environment=production` 拉取生产环境变量。
 - 执行 `npm run lint`、`npm run test`、`npm run build`。
-- 调用 `vercel deploy --prod`。
+- 调用 `vercel deploy --prod --yes`。
 
 ## 5. Vercel 构建配置
 
@@ -95,7 +92,8 @@ ADMIN_PASSWORD="强密码，仅首次 seed 使用"
     "start": "next start",
     "lint": "eslint .",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "deploy:vercel": "powershell -ExecutionPolicy Bypass -File scripts/deploy-vercel.ps1"
   }
 }
 ```

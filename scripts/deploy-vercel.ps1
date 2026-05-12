@@ -1,15 +1,17 @@
 $ErrorActionPreference = "Stop"
 
-$requiredVars = @("DATABASE_URL", "SESSION_SECRET", "ADMIN_USERNAME", "ADMIN_PASSWORD")
+if (-not (Get-Command npx -ErrorAction SilentlyContinue)) {
+  Write-Error "npx is required. Please install Node.js first."
+}
 
-foreach ($varName in $requiredVars) {
-  if (-not [Environment]::GetEnvironmentVariable($varName)) {
-    Write-Error "Missing required environment variable: $varName"
-  }
+if (-not (Test-Path ".vercel/project.json")) {
+  Write-Host "Vercel project is not linked yet. Starting vercel link..."
+  npx vercel link
 }
 
 npm ci
+npx vercel pull --yes --environment=production
 npm run lint
 npm run test
 npm run build
-npx vercel deploy --prod
+npx vercel deploy --prod --yes
