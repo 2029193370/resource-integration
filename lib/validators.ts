@@ -9,6 +9,7 @@ export const loginSchema = z.object({
 
 export const websiteSchema = z.object({
   name: z.string().trim().min(1, "请输入网站名称").max(80, "网站名称不能超过 80 个字符"),
+  category: z.string().trim().min(1, "请输入分类").max(40, "分类不能超过 40 个字符").default("常用"),
   url: z
     .string()
     .trim()

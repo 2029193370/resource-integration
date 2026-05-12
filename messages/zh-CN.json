@@ -3,6 +3,8 @@
   "tagline": "把常用工具、灵感来源和重要入口集中整理，打开这里就能快速回到你需要的网络资源。",
   "searchPlaceholder": "搜索网站名称、网址或备注",
   "allSites": "全部网站",
+  "allCategories": "全部分类",
+  "category": "分类",
   "emptyTitle": "还没有保存网站",
   "emptyDescription": "登录后台添加第一条网站记录后，这里会展示你的导航卡片。",
   "loadError": "暂时无法读取网站列表，请检查 DATABASE_URL 是否已配置为有效的 Neon PostgreSQL 连接串。",

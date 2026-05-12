@@ -64,8 +64,9 @@ resource-integration/
 │   ├── zh-CN.json
 │   └── en.json
 ├── prisma/
-│   ├── schema.prisma
-│   └── seed.ts
+│   └── schema.prisma
+├── database/
+│   └── initial-database.sql
 ├── scripts/
 │   ├── deploy-vercel.ps1
 │   ├── deploy-vercel.sh

@@ -5,6 +5,7 @@ export type WebsiteView = {
   id: string;
   name: string;
   url: string;
+  category: string;
   note: string;
   sortOrder: number;
   createdAt: string;
@@ -15,6 +16,7 @@ function toWebsiteView(website: {
   id: string;
   name: string;
   url: string;
+  category: string;
   note: string;
   sortOrder: number;
   createdAt: Date;
@@ -29,7 +31,7 @@ function toWebsiteView(website: {
 
 export async function listWebsites() {
   const websites = await prisma.website.findMany({
-    orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }]
+    orderBy: [{ category: "asc" }, { sortOrder: "asc" }, { createdAt: "desc" }]
   });
 
   return websites.map(toWebsiteView);

@@ -15,8 +15,7 @@
 ```bash
 npm install
 cp .env.example .env
-npm run db:migrate
-npm run db:seed
+psql "$DATABASE_URL" -f database/initial-database.sql
 npm run dev
 ```
 
@@ -35,14 +34,13 @@ DATABASE_URL="postgresql://..."
 DIRECT_URL="postgresql://..."
 ```
 
-4. 首次部署前执行 Prisma 迁移：
+4. 首次部署前导入初始数据库脚本：
 
 ```bash
-npm run db:migrate
-npm run db:seed
+psql "$DATABASE_URL" -f database/initial-database.sql
 ```
 
-生产环境推荐通过 Vercel 构建流程或部署脚本执行迁移，避免手动遗漏。
+`database/initial-database.sql` 包含全部表结构和必要初始数据，可用于新环境初始化。
 
 ## 4. Vercel 一键部署
 
@@ -83,7 +81,6 @@ ADMIN_PASSWORD="强密码，仅首次 seed 使用"
 - 检查必需环境变量。
 - 执行 `npm ci`。
 - 执行 `npm run lint`、`npm run test`、`npm run build`。
-- 执行 `npx prisma migrate deploy`。
 - 调用 `vercel deploy --prod`。
 
 ## 5. Vercel 构建配置
@@ -96,12 +93,9 @@ ADMIN_PASSWORD="强密码，仅首次 seed 使用"
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "test": "vitest run",
-    "test:e2e": "playwright test",
-    "db:migrate": "prisma migrate deploy",
-    "db:dev": "prisma migrate dev",
-    "db:seed": "tsx prisma/seed.ts"
+    "test:e2e": "playwright test"
   }
 }
 ```
@@ -124,9 +118,9 @@ ADMIN_PASSWORD="强密码，仅首次 seed 使用"
 | `NEXT_PUBLIC_DEFAULT_LOCALE` | 是 | 默认语言，`zh-CN` 或 `en` |
 | `SESSION_SECRET` | 是 | Session 签名密钥，至少 32 位 |
 | `DATABASE_URL` | 是 | Neon pooled 连接串，应用运行使用 |
-| `DIRECT_URL` | 是 | Neon direct 连接串，Prisma migration 使用 |
-| `ADMIN_USERNAME` | 是 | 初始管理员用户名 |
-| `ADMIN_PASSWORD` | 是 | 初始管理员密码，仅 seed 使用 |
+| `DIRECT_URL` | 否 | 预留直连数据库连接串 |
+| `ADMIN_USERNAME` | 否 | 初始管理员用户名，已包含在初始 SQL 中 |
+| `ADMIN_PASSWORD` | 否 | 初始管理员密码，已包含为哈希数据 |
 | `VERCEL_ORG_ID` | 否 | CI 自动部署时使用 |
 | `VERCEL_PROJECT_ID` | 否 | CI 自动部署时使用 |
 
@@ -174,7 +168,7 @@ VERCEL_PROJECT_ID=
 
 ## 9. 回滚
 
-Vercel 支持在 Dashboard 中将生产环境回滚到上一成功部署。数据库迁移需要保持向后兼容；破坏性 schema 变更必须先备份 Neon 分支。
+Vercel 支持在 Dashboard 中将生产环境回滚到上一成功部署。数据库初始化以 `database/initial-database.sql` 为准；覆盖导入前必须先备份目标数据库。
 
 ## 10. 变更记录
 

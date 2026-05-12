@@ -14,6 +14,4 @@ npm ci
 npm run lint
 npm run test
 npm run build
-npx prisma migrate deploy
-npx prisma db seed
 npx vercel deploy --prod

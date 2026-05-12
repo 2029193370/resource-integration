@@ -14,6 +14,7 @@ type AdminDashboardProps = {
 type FormState = {
   id?: string;
   name: string;
+  category: string;
   url: string;
   note: string;
   sortOrder: number;
@@ -21,6 +22,7 @@ type FormState = {
 
 const emptyForm: FormState = {
   name: "",
+  category: "常用",
   url: "",
   note: "",
   sortOrder: 0
@@ -112,6 +114,10 @@ export function AdminDashboard({ locale, dictionary, initialWebsites }: AdminDas
             <input id="name" value={form.name} onChange={(event) => updateForm("name", event.target.value)} required maxLength={80} />
           </div>
           <div className="field">
+            <label htmlFor="category">{dictionary.category}</label>
+            <input id="category" value={form.category} onChange={(event) => updateForm("category", event.target.value)} required maxLength={40} />
+          </div>
+          <div className="field">
             <label htmlFor="url">{dictionary.url}</label>
             <input id="url" value={form.url} onChange={(event) => updateForm("url", event.target.value)} required placeholder="https://example.com" />
           </div>
@@ -143,7 +149,7 @@ export function AdminDashboard({ locale, dictionary, initialWebsites }: AdminDas
               <article className="admin-row" key={website.id}>
                 <div>
                   <strong>{website.name}</strong>
-                  <span>{website.url}</span>
+                  <span>{website.category} · {website.url}</span>
                   {website.note ? <p>{website.note}</p> : null}
                 </div>
                 <div className="row-actions">

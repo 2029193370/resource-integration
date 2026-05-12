@@ -24,8 +24,7 @@
 ```bash
 npm install
 cp .env.example .env
-npm run db:migrate
-npm run db:seed
+psql "$DATABASE_URL" -f database/initial-database.sql
 npm run dev
 ```
 
@@ -47,11 +46,13 @@ ADMIN_PASSWORD="初始管理员密码"
 
 ## 数据库
 
+项目只保留一份可用于新环境初始化的完整 SQL：
+
 ```bash
-npm run db:dev      # 本地开发生成迁移
-npm run db:migrate  # 部署环境执行迁移
-npm run db:seed     # 创建初始管理员和示例网站
+psql "$DATABASE_URL" -f database/initial-database.sql
 ```
+
+这份脚本包含全部表结构和必要初始数据。
 
 ## 部署到 Vercel
 

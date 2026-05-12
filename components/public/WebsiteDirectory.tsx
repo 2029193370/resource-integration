@@ -12,17 +12,25 @@ type WebsiteDirectoryProps = {
 
 export function WebsiteDirectory({ websites, dictionary, loadError }: WebsiteDirectoryProps) {
   const [query, setQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+
+  const categories = useMemo(() => {
+    return Array.from(new Set(websites.map((website) => website.category).filter(Boolean))).sort((a, b) =>
+      a.localeCompare(b)
+    );
+  }, [websites]);
 
   const filteredWebsites = useMemo(() => {
     const keyword = query.trim().toLowerCase();
-    if (!keyword) {
-      return websites;
-    }
+    return websites.filter((website) => {
+      const matchesCategory = !selectedCategory || website.category === selectedCategory;
+      const matchesKeyword =
+        !keyword ||
+        [website.name, website.url, website.note, website.category].some((value) => value.toLowerCase().includes(keyword));
 
-    return websites.filter((website) =>
-      [website.name, website.url, website.note].some((value) => value.toLowerCase().includes(keyword))
-    );
-  }, [query, websites]);
+      return matchesCategory && matchesKeyword;
+    });
+  }, [query, selectedCategory, websites]);
 
   return (
     <section className="directory-section">
@@ -37,6 +45,24 @@ export function WebsiteDirectory({ websites, dictionary, loadError }: WebsiteDir
           {dictionary.allSites} · {filteredWebsites.length}
         </span>
       </div>
+
+      {categories.length > 0 ? (
+        <div className="category-filter" aria-label={dictionary.category}>
+          <button className={!selectedCategory ? "category-chip active" : "category-chip"} type="button" onClick={() => setSelectedCategory("")}>
+            {dictionary.allCategories}
+          </button>
+          {categories.map((category) => (
+            <button
+              className={selectedCategory === category ? "category-chip active" : "category-chip"}
+              key={category}
+              type="button"
+              onClick={() => setSelectedCategory(category)}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {loadError ? (
         <div className="empty-card glass-panel">
@@ -53,7 +79,10 @@ export function WebsiteDirectory({ websites, dictionary, loadError }: WebsiteDir
           {filteredWebsites.map((website, index) => (
             <article className="website-card glass-panel" key={website.id} style={{ animationDelay: `${index * 45}ms` }}>
               <div>
-                <span className="website-index">{String(index + 1).padStart(2, "0")}</span>
+                <div className="website-card-meta">
+                  <span className="website-index">{String(index + 1).padStart(2, "0")}</span>
+                  <span className="website-category">{website.category}</span>
+                </div>
                 <h2>{website.name}</h2>
                 {website.note ? <p>{website.note}</p> : null}
               </div>

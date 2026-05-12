@@ -17,6 +17,9 @@ permissions:
 jobs:
   ci:
     uses: ./.github/workflows/reusable-ci.yml
+    permissions:
+      contents: read
+      security-events: write
     with:
       node-version: '22'
       enable-checkov: false
