@@ -28,6 +28,7 @@ temp/
 .env.development
 .env.production
 .env.*.local
+vercel.env
 !.env.example
 !.env.sample
 *.pem
